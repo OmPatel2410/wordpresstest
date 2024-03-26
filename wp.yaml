@@ -1,9 +1,6 @@
 services:
   db:
-    # We use a mariadb image which supports both amd64 & arm64 architecture
     image: mariadb:10.6.4-focal
-    # If you really want to use MySQL, uncomment the following line
-    #image: mysql:8.0.27
     command: '--default-authentication-plugin=mysql_native_password'
     volumes:
       - db_data:/var/lib/mysql
@@ -16,10 +13,11 @@ services:
       - MYSQL_USER=wordpress
       - MYSQL_PASSWORD=wordpress
     ports:
-      - 3306
-      - 33060
+      - "3306:3306"
+      - "33060:33060"
     networks:
       - wp_net
+
   wp:
     image: wordpress:latest
     deploy:
@@ -28,7 +26,7 @@ services:
       restart_policy:
         condition: on-failure
     ports:
-      - 80
+      - "80:80"
     networks:
       - wp_net
     depends_on:
@@ -38,36 +36,10 @@ services:
       - WORDPRESS_DB_USER=wordpress
       - WORDPRESS_DB_PASSWORD=wordpress
       - WORDPRESS_DB_NAME=wordpress
-  # nginx:
-  #   image: nginx:latest
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
-  #   depends_on:
-  #     - wp
-  #   ports:
-  #     - "80:80"
-  #   networks:
-  #     - wp_net
+
 volumes:
   db_data:
+
 networks:
-    wp_net:
-        driver: overlay
-- Create nginx.conf file:
-
-user  nginx;
-
-events {
-    worker_connections   1000;
-}
-http {
-        server {
-              listen 80;
-              location / {
-                proxy_pass http://wp;
-              }
-        }
-}
-
-- Execute the following commands to create the stack
-sudo docker stack deploy -c wp.yaml wordpress
+  wp_net:
+    driver: overlay
